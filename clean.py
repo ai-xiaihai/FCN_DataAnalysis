@@ -22,23 +22,50 @@ def cleanup_0IR_single(sim, numNode, lag_one=False):
 		newcol = pd.Series(newcol)
 		sim[v] = newcol
 
-	# filter out cases where banks defaulted in the previous period
+	# add new column: leverage = debt / equity on the book 
+	sim["leverage"] = sim["deposits"] / (sim["assets"]+sim["cash"]-sim["deposits"])
+
+	# add new column: over-leverage-frequency = over leverages / period
+	sim["over-leverage-frequency"] = sim["over leverages"] / sim["period"]
+
+	# a dictionary containing the columns and its corresponding new names
+	# we copy some variables to its subsequent period observation
+	lag_name = {
+		"wealth": "wealth-lag",
+		"deposits": "deposits-lag",
+		"cash": "cash-lag",
+		"assets": "assets-lag",
+		"leverage": "leverage-lag",
+		"credit available": "credit-available-lag",
+		"credit issued": "credit-issued-lag"
+	}
+
+	# add new columns
+	for k,v in lag_name.items():
+		newcol = np.append([-8888 for _ in range(numNode-1)], sim[k].values[:-(numNode-1)])
+		newcol = pd.Series(newcol)
+		sim[v] = newcol
+
+	# filter out cases where banks defaulted in the previous periods
 	sim = sim[sim["defaults due to negative wealth"]+sim["defaults due to deposit shock"]
 			  +sim["default-next-wealth"]+sim["default-next-deposit"] < 2]
+
+	# filter out first period observations
+	sim = sim[sim["period"] != 1]
 
 	# add new column: defaults next period
 	sim["default-next"] = sim["default-next-wealth"] + sim["default-next-deposit"]
 
-	# add new column: leverage = debt / equity on the book 
-	sim["leverage"] = sim["deposits"] / (sim["assets"]+sim["cash"]-sim["deposits"])
-
 	return sim[["period", "theta (risk aversion)",
 		 "wealth", "deposits", "cash", "assets", "leverage",
 		 "credit available", "credit issued",
-		 "default-next-wealth", "default-next-deposit", "default-next"]]
+		 "default-next-wealth", "default-next-deposit", "default-next",
+		 "wealth-lag", "deposits-lag", "cash-lag", "assets-lag",
+		 "leverage-lag", "credit-available-lag", "credit-issued-lag",
+		 "over-leverage-frequency"]]
 
 # Clean up data for an experiment w/ no interest rate
-# exp: data relating to an experiment (multiple simulationn w/ the same parameter)
+# exp: data relating to an experiment (multiple simulation w/ the same parameter)
 # numNode: number of nodes including the market node
 # numPeriod: number of periods in each simulation
 # numSim: number of simulations in the experiment
