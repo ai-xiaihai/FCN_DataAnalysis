@@ -13,7 +13,9 @@ def cleanup_0IR_single(sim, numNode, lag_one=False):
 		# new column: defaults due to negative wealth next period
 		"defaults due to negative wealth": "default-next-wealth",
 		# new column: defaults due to deposit shock next period
-		"defaults due to deposit shock": "default-next-deposit"
+		"defaults due to deposit shock": "default-next-deposit",
+		# new column: defaults due to interest next period
+		"defaults due to interest": "default-next-interest"
 	}
 
 	# add new columns
@@ -23,7 +25,9 @@ def cleanup_0IR_single(sim, numNode, lag_one=False):
 		sim[v] = newcol
 
 	# add new column: leverage = debt / equity on the book 
-	sim["leverage"] = sim["deposits"] / (sim["assets"]+sim["cash"]-sim["deposits"])
+	sim["leverage"] = ((sim["debt to pay"] + sim["deposits"]) 
+		/ (sim["assets"] + sim["cash"] + sim["debt owed"] 
+			- sim["debt to pay"] - sim["deposits"]))
 
 	# add new column: dummy variable for zero leverage
 	sim["dummy-0-leverage"] = np.where(sim["leverage"]==0, 1, 0)
@@ -50,20 +54,25 @@ def cleanup_0IR_single(sim, numNode, lag_one=False):
 		newcol = pd.Series(newcol)
 		sim[v] = newcol
 
+	# add new column: defaults next period
+	sim["default-next"] = (sim["default-next-wealth"] + 
+							sim["default-next-deposit"] +
+							sim["default-next-interest"])
+
 	# filter out cases where banks defaulted in the previous periods
-	sim = sim[sim["defaults due to negative wealth"]+sim["defaults due to deposit shock"]
-			  +sim["default-next-wealth"]+sim["default-next-deposit"] < 2]
+	sim = sim[sim["defaults due to negative wealth"]
+				+sim["defaults due to deposit shock"]
+			  	+sim["defaults due to interest"]
+			  	+sim["default-next"] < 2]
 
 	# filter out first period observations
 	sim = sim[sim["period"] != 1]
 
-	# add new column: defaults next period
-	sim["default-next"] = sim["default-next-wealth"] + sim["default-next-deposit"]
-
 	return sim[["period", "theta (risk aversion)",
 		 "wealth", "deposits", "cash", "assets", "leverage",
 		 "credit available", "credit issued", "dummy-0-leverage",
-		 "default-next-wealth", "default-next-deposit", "default-next",
+		 "default-next-wealth", "default-next-deposit", "default-next-interest",
+		 "default-next",
 		 "wealth-lag", "deposits-lag", "cash-lag", "assets-lag",
 		 "leverage-lag", "credit-available-lag", "credit-issued-lag",
 		 "dummy-0-leverage-lag",

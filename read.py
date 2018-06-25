@@ -6,7 +6,7 @@ import pandas as pd
 def read_sims_result(filepath, numNode=32):
     # add column names
     colnames=["dot"+str(x) for x in range(1,numNode)]
-    colnames.extend(["period", "theta (risk aversion)","defaults due to interest", 
+    colnames.extend(["period", "theta (risk aversion)", "defaults due to interest", 
          "defaults due to negative wealth", "defaults due to deposit shock", 
          "over leverages", "wealth", "debt to pay", "credit available", 
          "debt owed", "credit issued", "deposits", "cash", "assets"])
