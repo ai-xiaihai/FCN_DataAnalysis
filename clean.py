@@ -25,6 +25,9 @@ def cleanup_0IR_single(sim, numNode, lag_one=False):
 	# add new column: leverage = debt / equity on the book 
 	sim["leverage"] = sim["deposits"] / (sim["assets"]+sim["cash"]-sim["deposits"])
 
+	# add new column: dummy variable for zero leverage
+	sim["dummy-0-leverage"] = np.where(sim["leverage"]==0, 1, 0)
+
 	# add new column: over-leverage-frequency = over leverages / period
 	sim["over-leverage-frequency"] = sim["over leverages"] / sim["period"]
 
@@ -37,7 +40,8 @@ def cleanup_0IR_single(sim, numNode, lag_one=False):
 		"assets": "assets-lag",
 		"leverage": "leverage-lag",
 		"credit available": "credit-available-lag",
-		"credit issued": "credit-issued-lag"
+		"credit issued": "credit-issued-lag",
+		"dummy-0-leverage": "dummy-0-leverage-lag"
 	}
 
 	# add new columns
@@ -58,10 +62,11 @@ def cleanup_0IR_single(sim, numNode, lag_one=False):
 
 	return sim[["period", "theta (risk aversion)",
 		 "wealth", "deposits", "cash", "assets", "leverage",
-		 "credit available", "credit issued",
+		 "credit available", "credit issued", "dummy-0-leverage",
 		 "default-next-wealth", "default-next-deposit", "default-next",
 		 "wealth-lag", "deposits-lag", "cash-lag", "assets-lag",
 		 "leverage-lag", "credit-available-lag", "credit-issued-lag",
+		 "dummy-0-leverage-lag",
 		 "over-leverage-frequency"]]
 
 # Clean up data for an experiment w/ no interest rate
