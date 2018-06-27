@@ -62,21 +62,20 @@ def cleanup_0IR_single(sim, numNode, lag_one=False):
 	# filter out cases where banks defaulted in the previous periods
 	sim = sim[sim["defaults due to negative wealth"]
 				+sim["defaults due to deposit shock"]
-			  	+sim["defaults due to interest"]
-			  	+sim["default-next"] < 2]
+				+sim["defaults due to interest"]
+				+sim["default-next"] < 2]
 
 	# filter out first period observations
 	sim = sim[sim["period"] != 1]
 
-	return sim[["period", "theta (risk aversion)",
+	return sim[["sim#", "period", "bankID", "theta (risk aversion)",  
 		 "wealth", "deposits", "cash", "assets", "leverage",
 		 "credit available", "credit issued", "dummy-0-leverage",
+		 "wealth-lag", "deposits-lag", "cash-lag", "assets-lag", "leverage-lag",
+		 "credit-available-lag", "credit-issued-lag", "dummy-0-leverage-lag",
+		 "over-leverage-frequency",
 		 "default-next-wealth", "default-next-deposit", "default-next-interest",
-		 "default-next",
-		 "wealth-lag", "deposits-lag", "cash-lag", "assets-lag",
-		 "leverage-lag", "credit-available-lag", "credit-issued-lag",
-		 "dummy-0-leverage-lag",
-		 "over-leverage-frequency"]]
+		 "default-next"]]
 
 # Clean up data for an experiment w/ no interest rate
 # exp: data relating to an experiment (multiple simulation w/ the same parameter)
@@ -85,6 +84,10 @@ def cleanup_0IR_single(sim, numNode, lag_one=False):
 # numSim: number of simulations in the experiment
 # balanced: whether # of default cases = # of non-default cases
 def cleanup_0IR_exp(exp, numNode, numPeriod, numSim, balanced=False):
+	# insert some variable to locate observations
+	exp["sim#"] = np.repeat(np.array(range(numSim)), numPeriod*(numNode-1)).tolist()
+	exp["bankID"] = np.tile(np.array(range(numNode-1)), numPeriod*numSim)
+
 	# apply function cleanup_0IR_single to result data of each simulation
 	cleaned_sims_data = [cleanup_0IR_single(
 		exp.loc[i*(numNode-1)*numPeriod : (i+1)*(numNode-1)*numPeriod-1].copy().reset_index(drop=True)
@@ -103,3 +106,22 @@ def cleanup_0IR_exp(exp, numNode, numPeriod, numSim, balanced=False):
 		df = df.take(indexChosen).reset_index(drop=True)
 
 	return df
+
+# Clean up data to get the adjacency matrices from simulation result
+# df: simulation result
+# numNode: number of nodes including the market node
+# numPeriod: number of periods in each simulation
+# numSim: number of simulations in the experiment
+# Return a 4-D numpy array 
+# containing every simulation, period 1 to 14, adjacency matrix
+def cleanup_network(df, numNode=32, numPeriod=15, numSim=50):
+	N = numNode-1
+	P = numPeriod
+	result = np.empty([numSim, numPeriod-2, N, N])
+	for i in range(numSim):
+		for j in range(numPeriod-2):
+			if j != 0 and j != 14:
+				result[i,j] = df.loc[i*P*N + j*N : i*P*N + j*N + (N-1),
+									 "dot1" : "dot31"
+									].values
+	return result
