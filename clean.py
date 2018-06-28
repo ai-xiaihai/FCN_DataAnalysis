@@ -6,7 +6,7 @@ from random import choices
 # sim: data relating to a single simulation
 # numNode: number of nodes including the market node
 # include one-period lag in the data
-def cleanup_0IR_single(sim, numNode, lag_one=False):
+def cleanup_0IR_single(sim, numNode):
 	# a dictionary containing the columns and its corresponding new names
 	# we copy some variables to its previous period observation
 	old_to_new = {
@@ -81,12 +81,13 @@ def cleanup_0IR_single(sim, numNode, lag_one=False):
 # exp: data relating to an experiment (multiple simulation w/ the same parameter)
 # numNode: number of nodes including the market node
 # numPeriod: number of periods in each simulation
-# numSim: number of simulations in the experiment
+# numSim: number of simulations in the experiment 
+#			(<= the total number of simulations in the experiment)
 # balanced: whether # of default cases = # of non-default cases
 def cleanup_0IR_exp(exp, numNode, numPeriod, numSim, balanced=False):
 	# insert some variable to locate observations
-	exp["sim#"] = np.repeat(np.array(range(numSim)), numPeriod*(numNode-1)).tolist()
-	exp["bankID"] = np.tile(np.array(range(numNode-1)), numPeriod*numSim)
+	exp["sim#"] = pd.Series(np.repeat(np.array(range(numSim)), numPeriod*(numNode-1)))
+	exp["bankID"] = pd.Series(np.tile(np.array(range(numNode-1)), numPeriod*numSim))
 
 	# apply function cleanup_0IR_single to result data of each simulation
 	cleaned_sims_data = [cleanup_0IR_single(
