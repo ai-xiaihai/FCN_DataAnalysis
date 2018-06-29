@@ -118,11 +118,10 @@ def cleanup_0IR_exp(exp, numNode, numPeriod, numSim, balanced=False):
 def cleanup_network(df, numNode=32, numPeriod=15, numSim=50):
 	N = numNode-1
 	P = numPeriod
-	result = np.empty([numSim, numPeriod-2, N, N])
+	result = np.empty([numSim, numPeriod, N, N])
 	for i in range(numSim):
-		for j in range(numPeriod-2):
-			if j != 0 and j != 14:
-				result[i,j] = df.loc[i*P*N + j*N : i*P*N + j*N + (N-1),
-									 "dot1" : "dot31"
-									].values
+		for j in range(numPeriod):
+			result[i,j] = df.loc[i*P*N + j*N : i*P*N + j*N + (N-1),
+								 "dot0" : "dot30"
+								].values
 	return result
