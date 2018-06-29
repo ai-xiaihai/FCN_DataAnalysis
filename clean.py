@@ -2,11 +2,23 @@ import pandas as pd
 import numpy as np
 from random import choices
 
-# Clean up data for a single simulation w/ no interest rate
-# sim: data relating to a single simulation
-# numNode: number of nodes including the market node
-# include one-period lag in the data
 def cleanup_0IR_single(sim, numNode):
+	"""
+	Clean up data for a single simulation w/ no interest rate
+
+	Parameters
+	----------
+	sim: pandas dataFrame
+		data relating to a single simulation
+	numNode: int
+		number of nodes including the market node
+
+	Returns
+	----------
+	sim: pandas dataFrame
+		data relating to the simulation w/ selected variables
+	"""
+
 	# a dictionary containing the columns and its corresponding new names
 	# we copy some variables to its previous period observation
 	old_to_new = {
@@ -77,14 +89,29 @@ def cleanup_0IR_single(sim, numNode):
 		 "default-next-wealth", "default-next-deposit", "default-next-interest",
 		 "default-next"]]
 
-# Clean up data for an experiment w/ no interest rate
-# exp: data relating to an experiment (multiple simulation w/ the same parameter)
-# numNode: number of nodes including the market node
-# numPeriod: number of periods in each simulation
-# numSim: number of simulations in the experiment 
-#			(<= the total number of simulations in the experiment)
-# balanced: whether # of default cases = # of non-default cases
 def cleanup_0IR_exp(exp, numNode, numPeriod, numSim, balanced=False):
+	"""
+	Clean up data for an experiment w/ no interest rate
+
+	Parameters
+	----------
+	exp: pandas dataFrame
+		data relating to an experiment (multiple simulations w/ the same parameter)
+	numNode: int
+		number of nodes including the market node
+	numPeriod: int
+		number of periods in each simulation
+	numSim: int
+		output # simulations (<= total simulations # in the experiment)
+	balanced: boolean, default=False
+		whether # of default cases = # of non-default cases
+
+	Returns
+	----------
+	df: pandas dataFrame
+		data relating to the experiment w/ selected variables
+	"""
+
 	# insert some variable to locate observations
 	exp["sim#"] = pd.Series(np.repeat(np.array(range(numSim)), numPeriod*(numNode-1)))
 	exp["bankID"] = pd.Series(np.tile(np.array(range(numNode-1)), numPeriod*numSim))
@@ -108,14 +135,27 @@ def cleanup_0IR_exp(exp, numNode, numPeriod, numSim, balanced=False):
 
 	return df
 
-# Clean up data to get the adjacency matrices from simulation result
-# df: simulation result
-# numNode: number of nodes including the market node
-# numPeriod: number of periods in each simulation
-# numSim: number of simulations in the experiment
-# Return a 4-D numpy array 
-# containing every simulation, period 1 to 14, adjacency matrix
 def cleanup_network(df, numNode=32, numPeriod=15, numSim=50):
+	"""
+	Clean up data to get the adjacency matrices from simulation result
+
+	Parameters
+	----------
+	df: pandas dataFrame
+		simulation result
+	numNode: int
+		number of nodes including the market node
+	numPeriod: int
+		number of periods in each simulation
+	numSim: int
+		number of simulations in the experiment
+
+	Returns
+	----------
+	result: 4D numpy array 
+		containing adjacency matrices of every simulation
+	"""
+
 	N = numNode-1
 	P = numPeriod
 	result = np.empty([numSim, numPeriod, N, N])
