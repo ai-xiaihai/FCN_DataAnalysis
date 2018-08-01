@@ -6,6 +6,9 @@ from random import random # random [0,1)
 # This file contains customized algorithms similar to the idea of Page Rank.
 #
 
+# Experimentally, performance of random_walk_single_1a, 1b, 2a, 2b are
+# about the same.
+
 def random_walk_single_1a(N, solvent, iterations=10):
 	"""
 	at the begining of each round, flip coin to cause one solvent bank to default
