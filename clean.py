@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from random import choices
 
-def cleanup_0IR_single(sim, numNode):
+def cleanup_0IR_single(sim, numNode, debts=False):
 	"""
 	Clean up data for a single simulation w/ no interest rate
 
@@ -12,6 +12,8 @@ def cleanup_0IR_single(sim, numNode):
 		data relating to a single simulation
 	numNode: int
 		number of nodes including the market node
+	debts: boolean, default=False
+		whether to include debt in the output data-frame or not
 
 	Returns
 	----------
@@ -80,16 +82,14 @@ def cleanup_0IR_single(sim, numNode):
 	# filter out first period observations
 	sim = sim[sim["period"] != 1]
 
-	return sim[["sim#", "period", "bankID", "theta (risk aversion)",  
-		 "wealth", "deposits", "cash", "assets", "leverage",
-		 "credit available", "credit issued", "dummy-0-leverage",
-		 "wealth-lag", "deposits-lag", "cash-lag", "assets-lag", "leverage-lag",
-		 "credit-available-lag", "credit-issued-lag", "dummy-0-leverage-lag",
-		 "over-leverage-frequency",
-		 "default-next-wealth", "default-next-deposit", "default-next-interest",
-		 "default-next"]]
+	if debts:
+		variables = sim.columns
+	else:
+		variables = sim.columns[31:]
 
-def cleanup_0IR_exp(exp, numSim, balanced=False):
+	return sim[variables]
+
+def cleanup_0IR_exp(exp, numSim, balanced=False, debts=False):
 	"""
 	Clean up data for an experiment w/ no interest rate
 
@@ -101,6 +101,8 @@ def cleanup_0IR_exp(exp, numSim, balanced=False):
 		output # simulations (<= total simulations # in the experiment)
 	balanced: boolean, default=False
 		whether # of default cases = # of non-default cases
+	debts: boolean, default=False
+		whether to include debt in the output data-frame or not
 
 	Returns
 	----------
@@ -115,7 +117,7 @@ def cleanup_0IR_exp(exp, numSim, balanced=False):
 	# apply function cleanup_0IR_single to result data of each simulation
 	cleaned_sims_data = [cleanup_0IR_single(
 		exp.loc[i*numBank*numPeriod : (i+1)*numBank*numPeriod-1].copy().reset_index(drop=True)
-		, numBank+1) for i in range(numSim)]
+		, numBank+1, debts) for i in range(numSim)]
 
 	# Concatenate the simulation results together
 	df = pd.concat(cleaned_sims_data).reset_index(drop=True)
