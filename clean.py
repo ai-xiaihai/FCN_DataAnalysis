@@ -30,7 +30,7 @@ def cleanup_0IR_single(sim, numNode):
 		"defaults due to interest": "default-next-interest"
 	}
 
-	# add new columns
+	# add new columns (whether default next period)
 	for k,v in old_to_new.items():
 		newcol = np.append(sim[k].values[numNode-1:],[2 for _ in range(numNode-1)])
 		newcol = pd.Series(newcol)
@@ -60,7 +60,7 @@ def cleanup_0IR_single(sim, numNode):
 		"dummy-0-leverage": "dummy-0-leverage-lag"
 	}
 
-	# add new columns
+	# add new columns (lag variables)
 	for k,v in lag_name.items():
 		newcol = np.append([-8888 for _ in range(numNode-1)], sim[k].values[:-(numNode-1)])
 		newcol = pd.Series(newcol)
@@ -89,7 +89,7 @@ def cleanup_0IR_single(sim, numNode):
 		 "default-next-wealth", "default-next-deposit", "default-next-interest",
 		 "default-next"]]
 
-def cleanup_0IR_exp(exp, numNode, numPeriod, numSim, balanced=False):
+def cleanup_0IR_exp(exp, numSim, balanced=False):
 	"""
 	Clean up data for an experiment w/ no interest rate
 
@@ -97,10 +97,6 @@ def cleanup_0IR_exp(exp, numNode, numPeriod, numSim, balanced=False):
 	----------
 	exp: pandas dataFrame
 		data relating to an experiment (multiple simulations w/ the same parameter)
-	numNode: int
-		number of nodes including the market node
-	numPeriod: int
-		number of periods in each simulation
 	numSim: int
 		output # simulations (<= total simulations # in the experiment)
 	balanced: boolean, default=False
@@ -112,14 +108,14 @@ def cleanup_0IR_exp(exp, numNode, numPeriod, numSim, balanced=False):
 		data relating to the experiment w/ selected variables
 	"""
 
-	# insert some variable to locate observations
-	exp["sim#"] = pd.Series(np.repeat(np.array(range(numSim)), numPeriod*(numNode-1)))
-	exp["bankID"] = pd.Series(np.tile(np.array(range(numNode-1)), numPeriod*numSim))
+	# figure out data info
+	numBank = max(exp["bankID"]) + 1 # number of banks 
+	numPeriod = max(exp["period"]) # number of periods in each simulation
 
 	# apply function cleanup_0IR_single to result data of each simulation
 	cleaned_sims_data = [cleanup_0IR_single(
-		exp.loc[i*(numNode-1)*numPeriod : (i+1)*(numNode-1)*numPeriod-1].copy().reset_index(drop=True)
-		, numNode) for i in range(numSim)]
+		exp.loc[i*numBank*numPeriod : (i+1)*numBank*numPeriod-1].copy().reset_index(drop=True)
+		, numBank+1) for i in range(numSim)]
 
 	# Concatenate the simulation results together
 	df = pd.concat(cleaned_sims_data).reset_index(drop=True)

@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 def read_sims_result(filepath, numNode=32):
     """
@@ -32,5 +33,13 @@ def read_sims_result(filepath, numNode=32):
         names=colnames,
         index_col=False
     )
+
+    # figure out data related information
+    numPeriod = max(df["period"])
+    numSim = int(len(df) / numPeriod / (numNode-1))
+
+    # insert some variable to locate observations
+    df["sim#"] = pd.Series(np.repeat(np.array(range(numSim)), numPeriod*(numNode-1)))
+    df["bankID"] = pd.Series(np.tile(np.array(range(numNode-1)), numPeriod*numSim))
     
     return df
