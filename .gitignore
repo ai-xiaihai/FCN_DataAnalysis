@@ -4,3 +4,4 @@ data
 *.mp4
 play_around.ipynb
 vis
+*.csv
